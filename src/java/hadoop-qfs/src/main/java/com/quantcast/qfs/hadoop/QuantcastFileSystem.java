@@ -145,6 +145,14 @@ public class QuantcastFileSystem extends FileSystem {
     return qfsImpl.create(makeAbsolute(file).toUri().getPath(),
       replication, bufferSize, overwrite, permission.toShort());
   }
+  
+  public FSDataOutputStream createNonRecursive(Path f, FsPermission permission,
+        boolean overwrite, int bufferSize, short replication, long blockSize,
+	      Progressable progress) throws IOException {
+  	
+  	return this.create(f, permission, overwrite, bufferSize, replication, blockSize, progress);
+
+  }
 
   public FSDataInputStream open(Path path, int bufferSize) throws IOException {
     return qfsImpl.open(makeAbsolute(path).toUri().getPath(), bufferSize);
