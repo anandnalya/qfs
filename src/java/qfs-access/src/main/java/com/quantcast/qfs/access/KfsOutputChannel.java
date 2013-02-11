@@ -152,10 +152,10 @@ public class KfsOutputChannel implements WritableByteChannel, Positionable
         if (kfsFd < 0) {
             throw new IOException("File closed");
         }
-        if (append) {
-            syncSelf();
-        }
-        return 0;
+        syncSelf();
+        final int ret = sync(kfsAccess.getCPtr(), kfsFd);
+        kfsAccess.kfs_retToIOException(ret);
+        return ret;
     }
 
     private synchronized void syncSelf() throws IOException
