@@ -149,8 +149,13 @@ public class QuantcastFileSystem extends FileSystem {
   public FSDataOutputStream createNonRecursive(Path f, FsPermission permission,
         boolean overwrite, int bufferSize, short replication, long blockSize,
 	      Progressable progress) throws IOException {
-  	
-  	return this.create(f, permission, overwrite, bufferSize, replication, blockSize, progress);
+
+  	Path parent = f.getParent();
+	if(parent == null || super.exists(parent)){
+ 		return this.create(f, permission, overwrite, bufferSize, replication, blockSize, progress);
+	} else {
+		throw new IOException("Parent does not exist: " + parent);
+	}
 
   }
 
