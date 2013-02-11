@@ -3012,15 +3012,6 @@ KfsClientImpl::OpenSelf(const char *pathname, int openMode, int numReplicas,
     if ((openMode & (O_CREAT|O_EXCL)) == (O_CREAT|O_EXCL)) {
         return -EEXIST;
     }
-    if (! cacheAttributesFlag &&
-            op.fattr.IsAnyPermissionDefined() && (((
-                    (openMode & O_WRONLY) == 0 ||
-                    (openMode & (O_RDWR | O_RDONLY)) != 0) &&
-                ! op.fattr.CanRead(mEUser, mEGroup)) || (
-                    (openMode & (O_WRONLY | O_RDWR)) != 0 &&
-                ! op.fattr.CanWrite(mEUser, mEGroup)))) {
-        return -EACCES;
-    }
     if (op.fattr.isDirectory && openMode != O_RDONLY) {
         return -ENOTDIR;
     }
@@ -3226,6 +3217,7 @@ KfsClientImpl::Truncate(const char* pathname, chunkOff_t offset)
         return -EACCES;
     }
     TruncateOp op(nextSeq(), pathname, attr.fileId, offset);
+    op.setEofHintFlag = attr.numStripes > 1;
     DoMetaOpWithRetry(&op);
     if (op.status != 0) {
         return op.status;
@@ -3250,6 +3242,7 @@ KfsClientImpl::TruncateSelf(int fd, chunkOff_t offset)
 
     FileAttr *fa = FdAttr(fd);
     TruncateOp op(nextSeq(), FdInfo(fd)->pathname.c_str(), fa->fileId, offset);
+    op.setEofHintFlag = fa->numStripes > 1;
     DoMetaOpWithRetry(&op);
     int res = op.status;
 
@@ -4964,7 +4957,7 @@ public:
                 return ret;
             }
         }
-        ChmodOp op(mCli.nextSeq(), attr.fileId, (attr.isDirectory ?
+        ChmodOp op(mCli.nextSeq(), attr.fileId, mMode & (attr.isDirectory ?
             kfsMode_t(Permissions::kDirModeMask) :
             kfsMode_t(Permissions::kFileModeMask)));
         mCli.DoMetaOpWithRetry(&op);

@@ -957,6 +957,8 @@ struct MetaAllocate: public MetaRequest, public  KfsCallbackObj {
 struct MetaTruncate: public MetaRequest {
     fid_t           fid;      //!< file for which space has to be allocated
     chunkOff_t      offset;   //!< offset to truncate the file to
+    chunkOff_t      endOffset;
+    bool            setEofHintFlag; //!< set eof is the most frequently used
     //!< set if the blks from the beginning of the file to the offset have
     //!< to be deleted.
     bool            pruneBlksFromHead;
@@ -966,6 +968,8 @@ struct MetaTruncate: public MetaRequest {
         : MetaRequest(META_TRUNCATE, true),
           fid(-1),
           offset(-1),
+          endOffset(-1),
+          setEofHintFlag(true),
           pruneBlksFromHead(false),
           pathname(),
           mtime()
@@ -996,6 +1000,8 @@ struct MetaTruncate: public MetaRequest {
         .Def("Offset",          &MetaTruncate::offset,          chunkOff_t(-1))
         .Def("Pathname",        &MetaTruncate::pathname                       )
         .Def("Prune-from-head", &MetaTruncate::pruneBlksFromHead,        false)
+        .Def("End-offset",      &MetaTruncate::endOffset,       chunkOff_t(-1))
+        .Def("Set-eof",         &MetaTruncate::setEofHintFlag,            true)
         ;
     }
 };

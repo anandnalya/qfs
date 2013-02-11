@@ -356,6 +356,13 @@ TruncateOp::Request(ostream &os)
     if (pruneBlksFromHead) {
         os << "Prune-from-head: 1\r\n";
     }
+    if (! setEofHintFlag) {
+        // Default is true
+        os << "Set-eof: 0\r\n";
+    }
+    if (endOffset >= 0) {
+        os << "End-offset: " << endOffset << "\r\n";
+    }
     os << "\r\n";
 }
 
@@ -1059,6 +1066,17 @@ ChownOp::Request(ostream &os)
         os << "Group: " << group << "\r\n";
     }
     os << "\r\n";
+}
+
+void
+TruncateOp::ParseResponseHeaderSelf(const Properties& prop)
+{
+    respEndOffset = prop.getValue("End-offset", int64_t(-1));
+    if (status == 0 && ! pruneBlksFromHead &&
+            endOffset >= 0 && respEndOffset != endOffset) {
+        status    = -EFAULT;
+        statusMsg = "range truncate is not supported";
+    }
 }
 
 } //namespace client
